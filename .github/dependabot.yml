@@ -1,17 +1,32 @@
 # Actualizaciones automáticas: Dependabot abre pull requests; nunca se fusionan solos.
+# Los saltos mayores que ya revisamos y no aplicamos se ignoran aquí (con el motivo); las parches y menores siguen llegando.
 version: 2
 updates:
   - package-ecosystem: npm
     directory: /
     schedule: {interval: weekly}
     open-pull-requests-limit: 5
+    ignore:
+      # Producción corre Node 22: los tipos deben coincidir con esa versión. Revisar al subir de Node.
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: npm
     directory: /web
     schedule: {interval: weekly}
     open-pull-requests-limit: 5
+    ignore:
+      # vue-router 5 exige vite 7 o superior; vue-tsc aún no soporta TypeScript 7. Revisar al subir vite.
+      - dependency-name: "vue-router"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: github-actions
     directory: /
     schedule: {interval: weekly}
   - package-ecosystem: docker
     directory: /
     schedule: {interval: weekly}
+    ignore:
+      # Producción corre Node 22 (LTS). El salto de versión de Node se decide y se prueba a mano.
+      - dependency-name: "node"
+        update-types: ["version-update:semver-major"]
