@@ -39,7 +39,7 @@ const aad = (orgId: string, contexto: string) => Buffer.from(`${orgId}|${context
 export function cifrar(llaves: Llaves, texto: string, orgId: string, contexto: string): Cifrado {
   const llave = llaves.porVersion.get(llaves.activa)!;
   const nonce = randomBytes(12);
-  const c = createCipheriv('aes-256-gcm', llave, nonce);
+  const c = createCipheriv('aes-256-gcm', llave, nonce, { authTagLength: 16 });
   c.setAAD(aad(orgId, contexto));
   const cifrado = Buffer.concat([c.update(texto, 'utf8'), c.final()]);
   return { version: llaves.activa, datos: Buffer.concat([nonce, cifrado, c.getAuthTag()]) };
@@ -49,7 +49,7 @@ export function descifrar(llaves: Llaves, c: Cifrado, orgId: string, contexto: s
   const llave = llaves.porVersion.get(c.version);
   if (!llave || c.datos.length < 12 + 16) throw new Error('No se pudo descifrar');
   try {
-    const d = createDecipheriv('aes-256-gcm', llave, c.datos.subarray(0, 12));
+    const d = createDecipheriv('aes-256-gcm', llave, c.datos.subarray(0, 12), { authTagLength: 16 });
     d.setAAD(aad(orgId, contexto));
     d.setAuthTag(c.datos.subarray(c.datos.length - 16));
     return Buffer.concat([d.update(c.datos.subarray(12, c.datos.length - 16)), d.final()]).toString('utf8');
