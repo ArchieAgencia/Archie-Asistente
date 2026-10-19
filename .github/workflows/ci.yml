@@ -61,7 +61,7 @@ jobs:
           python3 -m pip install --quiet "semgrep==1.97.0"
           semgrep scan --config p/typescript --config p/nodejs --config p/secrets --config p/dockerfile --error --metrics=off src web/src migrations Dockerfile
       - name: Dependencias, configuración y secretos (Trivy, Apache-2.0)
-        uses: aquasecurity/trivy-action@v0.35.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: fs
           scanners: vuln,secret,misconfig
