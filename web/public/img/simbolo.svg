@@ -1,0 +1,3 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="15.5 15.5 89.0 89.0" width="356" height="356" role="img" aria-label="Archie AI"><title>Archie AI</title>
+<mask id="aio3" maskUnits="userSpaceOnUse" x="0" y="0" width="120" height="120"><rect width="120" height="120" fill="#fff"/><rect x="73" y="16" width="32" height="32" rx="8.96" fill="#000"/></mask><circle cx="60" cy="60" r="40" fill="none" stroke="#131126" stroke-width="9" mask="url(#aio3)"/><rect x="77" y="20" width="24" height="24" rx="6" fill="#7A3FF2"/><path d="M60 40 Q63 57 80 60 Q63 63 60 80 Q57 63 40 60 Q57 57 60 40 Z" fill="#7A3FF2"/>
+</svg>

@@ -1,0 +1,100 @@
+# Integración continua de Archie asistente.
+# - En pull requests: verifica y construye la imagen SIN publicar.
+# - En main: verifica, construye y publica la imagen en GHCR etiquetada con el commit.
+name: CI
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  verificar:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_PASSWORD: ci-solo-para-pruebas   # base efímera del CI, sin datos reales
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      ARCHIE_TEST_ADMIN_URL: postgres://postgres:ci-solo-para-pruebas@127.0.0.1:5432/postgres
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      - name: Vulnerabilidades de dependencias de producción
+        run: npm audit --omit=dev --audit-level=high
+      - name: Interfaz web (tipos y compilación)
+        working-directory: web
+        run: |
+          npm ci
+          npm run build
+          npm audit --omit=dev --audit-level=high
+
+  seguridad:
+    # Revisiones automáticas de seguridad. No reemplazan una revisión humana externa.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # Gitleaks revisa también el historial
+      - name: Secretos en el código y en el historial (Gitleaks, MIT)
+        env:
+          GITLEAKS_VERSION: "8.21.2"
+        run: |
+          curl -sSfL "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" | tar -xz gitleaks
+          ./gitleaks detect --source . --redact --no-banner --exit-code 1
+      - name: Análisis estático del código (Semgrep Community, LGPL-2.1)
+        run: |
+          python3 -m pip install --quiet "semgrep==1.97.0"
+          semgrep scan --config p/typescript --config p/nodejs --config p/secrets --config p/dockerfile --error --metrics=off src web/src migrations Dockerfile
+      - name: Dependencias, configuración y secretos (Trivy, Apache-2.0)
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: fs
+          scanners: vuln,secret,misconfig
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: "1"
+
+  imagen:
+    runs-on: ubuntu-latest
+    needs: [verificar, seguridad]
+    permissions:
+      contents: read
+      packages: write
+    env:
+      IMAGEN: ghcr.io/archieagencia/archie-asistente
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Entrar a GHCR (solo en main)
+        if: github.event_name == 'push'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Construir (y publicar solo en main)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: ${{ github.event_name == 'push' }}
+          build-args: ARCHIE_VERSION=${{ github.sha }}
+          tags: |
+            ${{ env.IMAGEN }}:${{ github.sha }}
+            ${{ env.IMAGEN }}:main
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

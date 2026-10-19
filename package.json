@@ -1,0 +1,41 @@
+{
+  "name": "archie-asistente",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Archie: asistente de IA de Archie Tech (producto independiente)",
+  "author": "Archie Technology & Marketing",
+  "license": "UNLICENSED",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "start": "node dist/index.js",
+    "crear-admin": "node dist/cli/crear-admin.js",
+    "migrar": "node dist/cli/migrar.js",
+    "aprovisionar": "node dist/cli/aprovisionar.js",
+    "resetear-2fa": "node dist/cli/resetear-2fa.js",
+    "dev": "node --watch --experimental-strip-types src/index.ts",
+    "crear-operador": "node dist/cli/crear-operador.js",
+    "regenerar-2fa-operador": "node dist/cli/regenerar-2fa-operador.js",
+    "marcar-cuenta-propia": "node dist/cli/marcar-cuenta-propia.js",
+    "renovar-mes": "node dist/cli/renovar-mes.js",
+    "limpiar": "node dist/cli/limpiar.js"
+  },
+  "dependencies": {
+    "@fastify/static": "^10.1.6",
+    "fastify": "^5.0.0",
+    "otpauth": "^9.5.2",
+    "pg": "^8.23.1",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/pg": "^8.23.1",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
+  }
+}

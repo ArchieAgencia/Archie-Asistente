@@ -1,0 +1,34 @@
+# Entorno de PRUEBA local de Archie AI (no es producción). Todo queda en tu computador.
+# Uso: ver demo/LEEME.md
+name: archie-ai-demo
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_PASSWORD: ${DEMO_CLAVE_ADMIN_BD}
+    volumes:
+      - datos:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+  app:
+    build:
+      context: ..
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: development            # en local usamos http, así que la cookie no lleva "Secure"
+      PORT: "8800"
+      ARCHIE_ORIGEN: http://localhost:8800
+      ARCHIE_PROXY_SALTOS: "0"
+      ARCHIE_CORREO: consola           # no envía correos: muestra el enlace de invitación en pantalla (solo pruebas)
+      DATABASE_URL: postgres://archie_app:${DEMO_CLAVE_APP}@db:5432/archie
+      ARCHIE_CLAVES_MAESTRAS: ${DEMO_CLAVES_MAESTRAS}
+      ARCHIE_CLAVE_ACTIVA: "1"
+    ports:
+      - "127.0.0.1:8800:8800"          # solo accesible desde tu propio computador
+volumes:
+  datos:
