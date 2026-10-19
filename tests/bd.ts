@@ -1,4 +1,4 @@
-import { randomBytes } from 'node:crypto';
+import { createHash, randomBytes } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import pg from 'pg';
@@ -18,7 +18,10 @@ export interface BdPrueba {
 
 export async function prepararBdPrueba(): Promise<BdPrueba> {
   const nombre = `archie_test_${randomBytes(4).toString('hex')}`;
-  const claves = { owner: randomBytes(16).toString('hex'), app: randomBytes(16).toString('hex') };
+  // Los roles son del clúster y los comparten todos los archivos de prueba que corren en paralelo:
+  // las claves deben ser iguales en todos (si no, cada archivo invalida la clave del otro).
+  const h = (e: string) => createHash('sha256').update(`${e}|${ADMIN_URL}`).digest('hex').slice(0, 32);
+  const claves = { owner: h('owner'), app: h('app') };
   await aprovisionar(ADMIN_URL!, nombre, claves);
   const base = new URL(ADMIN_URL!);
   const url = (u: string, p: string) => {
