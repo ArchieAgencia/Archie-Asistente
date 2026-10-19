@@ -15,9 +15,7 @@ updates:
     schedule: {interval: weekly}
     open-pull-requests-limit: 5
     ignore:
-      # vue-router 5 exige vite 7 o superior; vue-tsc aún no soporta TypeScript 7. Revisar al subir vite.
-      - dependency-name: "vue-router"
-        update-types: ["version-update:semver-major"]
+      # vue-tsc aún no soporta TypeScript 7. Revisar cuando lo soporte.
       - dependency-name: "typescript"
         update-types: ["version-update:semver-major"]
   - package-ecosystem: github-actions
