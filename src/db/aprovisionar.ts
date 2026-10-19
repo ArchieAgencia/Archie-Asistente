@@ -17,6 +17,8 @@ export async function aprovisionar(adminUrl: string, baseDeDatos: string, claves
   const admin = new pg.Client({ connectionString: adminUrl });
   await admin.connect();
   try {
+    // Los roles son del clúster: si dos aprovisionamientos corren a la vez (pruebas en paralelo, despliegues simultáneos) se pisan.
+    await admin.query('SELECT pg_advisory_lock(727001)');
     const lit = (s: string) => admin.escapeLiteral(s);
     await admin.query(`DO $$ BEGIN
       IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname='archie_preauth') THEN CREATE ROLE archie_preauth NOLOGIN NOSUPERUSER NOBYPASSRLS; END IF;
